@@ -1,0 +1,22 @@
+{
+  "sessions": [
+    {
+      "date": "2025-10-16 21:50:43",
+      "wpm": 140.78459847209254,
+      "accuracy": 4.587155963302752,
+      "time": 18.581578016281128,
+      "mode": "coding",
+      "language": "cpp",
+      "difficulty": "basic"
+    },
+    {
+      "date": "2025-10-16 21:50:50",
+      "wpm": 119264122.43478261,
+      "accuracy": 4.587155963302752,
+      "time": 2.193450927734375e-05,
+      "mode": "coding",
+      "language": "cpp",
+      "difficulty": "basic"
+    }
+  ]
+}
