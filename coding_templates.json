@@ -1,0 +1,88 @@
+{
+  "python": {
+    "basic": [
+      "def hello_world():\n    print(\"Hello, World!\")\n\nhello_world()",
+      "for i in range(5):\n    print(f\"Number: {i}\")",
+      "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)",
+      "numbers = [1, 2, 3, 4, 5]\nsquared = [x**2 for x in numbers]\nprint(squared)",
+      "class Person:\n    def __init__(self, name, age):\n        self.name = name\n        self.age = age\n    \n    def greet(self):\n        return f\"Hello, I'm {self.name}\""
+    ],
+    "intermediate": [
+      "import requests\n\ndef fetch_data(url):\n    try:\n        response = requests.get(url)\n        response.raise_for_status()\n        return response.json()\n    except requests.RequestException as e:\n        print(f\"Error: {e}\")\n        return None",
+      "from typing import List, Dict\n\ndef process_items(items: List[Dict[str, str]]) -> List[str]:\n    return [item['name'].upper() for item in items if 'name' in item]",
+      "import asyncio\n\nasync def fetch_url(url):\n    async with aiohttp.ClientSession() as session:\n        async with session.get(url) as response:\n            return await response.text()",
+      "from dataclasses import dataclass\nfrom datetime import datetime\n\n@dataclass\nclass User:\n    id: int\n    name: str\n    email: str\n    created_at: datetime\n    \n    def is_active(self) -> bool:\n        return self.created_at.year >= 2020"
+    ],
+    "advanced": [
+      "from functools import wraps\nimport time\n\ndef timer(func):\n    @wraps(func)\n    def wrapper(*args, **kwargs):\n        start = time.time()\n        result = func(*args, **kwargs)\n        end = time.time()\n        print(f\"{func.__name__} took {end - start:.4f} seconds\")\n        return result\n    return wrapper\n\n@timer\ndef slow_function():\n    time.sleep(1)\n    return \"Done!\"",
+      "import concurrent.futures\nimport threading\n\nclass ThreadSafeCounter:\n    def __init__(self):\n        self._value = 0\n        self._lock = threading.Lock()\n    \n    def increment(self):\n        with self._lock:\n            self._value += 1\n    \n    def value(self):\n        with self._lock:\n            return self._value"
+    ]
+  },
+  "java": {
+    "basic": [
+      "public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}",
+      "for (int i = 0; i < 5; i++) {\n    System.out.println(\"Number: \" + i);\n}",
+      "public int fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n-1) + fibonacci(n-2);\n}",
+      "List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);\nList<Integer> squared = numbers.stream()\n    .map(x -> x * x)\n    .collect(Collectors.toList());",
+      "public class Person {\n    private String name;\n    private int age;\n    \n    public Person(String name, int age) {\n        this.name = name;\n        this.age = age;\n    }\n    \n    public String greet() {\n        return \"Hello, I'm \" + name;\n    }\n}"
+    ],
+    "intermediate": [
+      "public class ApiClient {\n    private final HttpClient client = HttpClient.newHttpClient();\n    \n    public CompletableFuture<String> fetchData(String url) {\n        HttpRequest request = HttpRequest.newBuilder()\n            .uri(URI.create(url))\n            .build();\n        \n        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())\n            .thenApply(HttpResponse::body);\n    }\n}",
+      "public class StreamProcessor {\n    public List<String> processItems(List<Map<String, String>> items) {\n        return items.stream()\n            .filter(item -> item.containsKey(\"name\"))\n            .map(item -> item.get(\"name\").toUpperCase())\n            .collect(Collectors.toList());\n    }\n}"
+    ],
+    "advanced": [
+      "public class ThreadSafeCounter {\n    private final AtomicInteger count = new AtomicInteger(0);\n    \n    public void increment() {\n        count.incrementAndGet();\n    }\n    \n    public int getCount() {\n        return count.get();\n    }\n}",
+      "@Component\npublic class UserService {\n    @Autowired\n    private UserRepository userRepository;\n    \n    @Transactional\n    public User createUser(UserDto userDto) {\n        User user = new User();\n        user.setName(userDto.getName());\n        user.setEmail(userDto.getEmail());\n        return userRepository.save(user);\n    }\n}"
+    ]
+  },
+  "javascript": {
+    "basic": [
+      "function helloWorld() {\n    console.log('Hello, World!');\n}\n\nhelloWorld();",
+      "for (let i = 0; i < 5; i++) {\n    console.log(`Number: ${i}`);\n}",
+      "const fibonacci = (n) => {\n    if (n <= 1) return n;\n    return fibonacci(n-1) + fibonacci(n-2);\n};",
+      "const numbers = [1, 2, 3, 4, 5];\nconst squared = numbers.map(x => x ** 2);\nconsole.log(squared);",
+      "class Person {\n    constructor(name, age) {\n        this.name = name;\n        this.age = age;\n    }\n    \n    greet() {\n        return `Hello, I'm ${this.name}`;\n    }\n}"
+    ],
+    "intermediate": [
+      "const fetchData = async (url) => {\n    try {\n        const response = await fetch(url);\n        if (!response.ok) {\n            throw new Error(`HTTP error! status: ${response.status}`);\n        }\n        return await response.json();\n    } catch (error) {\n        console.error('Error:', error);\n        return null;\n    }\n};",
+      "const processItems = (items) => {\n    return items\n        .filter(item => item.hasOwnProperty('name'))\n        .map(item => item.name.toUpperCase());\n};",
+      "const debounce = (func, delay) => {\n    let timeoutId;\n    return (...args) => {\n        clearTimeout(timeoutId);\n        timeoutId = setTimeout(() => func.apply(null, args), delay);\n    };\n};"
+    ],
+    "advanced": [
+      "const memoize = (fn) => {\n    const cache = new Map();\n    return (...args) => {\n        const key = JSON.stringify(args);\n        if (cache.has(key)) {\n            return cache.get(key);\n        }\n        const result = fn(...args);\n        cache.set(key, result);\n        return result;\n    };\n};",
+      "import React, { useState, useEffect } from 'react';\n\nconst UserProfile = ({ userId }) => {\n    const [user, setUser] = useState(null);\n    const [loading, setLoading] = useState(true);\n    \n    useEffect(() => {\n        const fetchUser = async () => {\n            try {\n                const response = await fetch(`/api/users/${userId}`);\n                const userData = await response.json();\n                setUser(userData);\n            } catch (error) {\n                console.error('Failed to fetch user:', error);\n            } finally {\n                setLoading(false);\n            }\n        };\n        \n        fetchUser();\n    }, [userId]);\n    \n    if (loading) return <div>Loading...</div>;\n    if (!user) return <div>User not found</div>;\n    \n    return (\n        <div>\n            <h1>{user.name}</h1>\n            <p>{user.email}</p>\n        </div>\n    );\n};"
+    ]
+  },
+  "cpp": {
+    "basic": [
+      "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}",
+      "for (int i = 0; i < 5; i++) {\n    cout << \"Number: \" << i << endl;\n}",
+      "int fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n-1) + fibonacci(n-2);\n}",
+      "#include <vector>\n#include <algorithm>\n\nvector<int> numbers = {1, 2, 3, 4, 5};\nvector<int> squared;\nfor (int x : numbers) {\n    squared.push_back(x * x);\n}",
+      "class Person {\nprivate:\n    string name;\n    int age;\n\npublic:\n    Person(string n, int a) : name(n), age(a) {}\n    \n    string greet() {\n        return \"Hello, I'm \" + name;\n    }\n};"
+    ],
+    "intermediate": [
+      "#include <thread>\n#include <mutex>\n#include <atomic>\n\nclass ThreadSafeCounter {\nprivate:\n    std::atomic<int> count{0};\n\npublic:\n    void increment() {\n        count.fetch_add(1);\n    }\n    \n    int getCount() {\n        return count.load();\n    }\n};",
+      "#include <memory>\n#include <vector>\n\nclass SmartPointerExample {\nprivate:\n    std::unique_ptr<std::vector<int>> data;\n\npublic:\n    SmartPointerExample() : data(std::make_unique<std::vector<int>>()) {}\n    \n    void addValue(int value) {\n        data->push_back(value);\n    }\n    \n    size_t size() const {\n        return data->size();\n    }\n};"
+    ],
+    "advanced": [
+      "#include <future>\n#include <async>\n\ntemplate<typename T>\nclass PromiseFuture {\nprivate:\n    std::promise<T> promise;\n    std::future<T> future;\n\npublic:\n    PromiseFuture() : future(promise.get_future()) {}\n    \n    void setValue(const T& value) {\n        promise.set_value(value);\n    }\n    \n    T getValue() {\n        return future.get();\n    }\n};",
+      "#include <concepts>\n#include <ranges>\n\ntemplate<std::integral T>\nT calculateSum(const std::vector<T>& numbers) {\n    return std::ranges::fold_left(numbers, T{0}, std::plus{});\n}"
+    ]
+  },
+  "react": {
+    "basic": [
+      "import React from 'react';\n\nconst HelloWorld = () => {\n    return (\n        <div>\n            <h1>Hello, World!</h1>\n        </div>\n    );\n};\n\nexport default HelloWorld;",
+      "import React, { useState } from 'react';\n\nconst Counter = () => {\n    const [count, setCount] = useState(0);\n    \n    return (\n        <div>\n            <p>Count: {count}</p>\n            <button onClick={() => setCount(count + 1)}>\n                Increment\n            </button>\n        </div>\n    );\n};",
+      "import React, { useEffect } from 'react';\n\nconst Timer = () => {\n    const [seconds, setSeconds] = useState(0);\n    \n    useEffect(() => {\n        const interval = setInterval(() => {\n            setSeconds(seconds => seconds + 1);\n        }, 1000);\n        \n        return () => clearInterval(interval);\n    }, []);\n    \n    return <div>Timer: {seconds}s</div>;\n};"
+    ],
+    "intermediate": [
+      "import React, { useState, useEffect } from 'react';\n\nconst UserList = () => {\n    const [users, setUsers] = useState([]);\n    const [loading, setLoading] = useState(true);\n    \n    useEffect(() => {\n        const fetchUsers = async () => {\n            try {\n                const response = await fetch('/api/users');\n                const data = await response.json();\n                setUsers(data);\n            } catch (error) {\n                console.error('Error fetching users:', error);\n            } finally {\n                setLoading(false);\n            }\n        };\n        \n        fetchUsers();\n    }, []);\n    \n    if (loading) return <div>Loading...</div>;\n    \n    return (\n        <div>\n            {users.map(user => (\n                <div key={user.id}>\n                    <h3>{user.name}</h3>\n                    <p>{user.email}</p>\n                </div>\n            ))}\n        </div>\n    );\n};",
+      "import React, { useReducer } from 'react';\n\nconst initialState = { count: 0 };\n\nconst reducer = (state, action) => {\n    switch (action.type) {\n        case 'increment':\n            return { count: state.count + 1 };\n        case 'decrement':\n            return { count: state.count - 1 };\n        case 'reset':\n            return { count: 0 };\n        default:\n            return state;\n    }\n};\n\nconst Counter = () => {\n    const [state, dispatch] = useReducer(reducer, initialState);\n    \n    return (\n        <div>\n            <p>Count: {state.count}</p>\n            <button onClick={() => dispatch({type: 'increment'})}>+</button>\n            <button onClick={() => dispatch({type: 'decrement'})}>-</button>\n            <button onClick={() => dispatch({type: 'reset'})}>Reset</button>\n        </div>\n    );\n};"
+    ],
+    "advanced": [
+      "import React, { createContext, useContext, useReducer } from 'react';\n\nconst ThemeContext = createContext();\n\nconst themeReducer = (state, action) => {\n    switch (action.type) {\n        case 'TOGGLE_THEME':\n            return {\n                ...state,\n                theme: state.theme === 'light' ? 'dark' : 'light'\n            };\n        default:\n            return state;\n    }\n};\n\nconst ThemeProvider = ({ children }) => {\n    const [state, dispatch] = useReducer(themeReducer, { theme: 'light' });\n    \n    return (\n        <ThemeContext.Provider value={{ state, dispatch }}>\n            {children}\n        </ThemeContext.Provider>\n    );\n};\n\nconst useTheme = () => {\n    const context = useContext(ThemeContext);\n    if (!context) {\n        throw new Error('useTheme must be used within ThemeProvider');\n    }\n    return context;\n};",
+      "import React, { memo, useMemo, useCallback } from 'react';\n\nconst ExpensiveComponent = memo(({ data, onUpdate }) => {\n    const processedData = useMemo(() => {\n        return data.map(item => ({\n            ...item,\n            processed: true,\n            timestamp: Date.now()\n        }));\n    }, [data]);\n    \n    const handleClick = useCallback((id) => {\n        onUpdate(id);\n    }, [onUpdate]);\n    \n    return (\n        <div>\n            {processedData.map(item => (\n                <div key={item.id} onClick={() => handleClick(item.id)}>\n                    {item.name}\n                </div>\n            ))}\n        </div>\n    );\n});"
+    ]
+  }
+}

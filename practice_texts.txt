@@ -1,0 +1,16 @@
+초급 연습용 텍스트
+The cat sat on the mat.
+The dog ran in the yard.
+I like to read books.
+She walks to school every day.
+The sun shines bright today.
+
+중급 연습용 텍스트
+Practice typing with the Dvorak keyboard layout for improved efficiency.
+The quick brown fox jumps over the lazy dog.
+Learning the Dvorak layout requires patience and consistent practice.
+Many professional typists prefer Dvorak over QWERTY.
+Touch typing on Dvorak can significantly improve your speed.
+
+고급 연습용 텍스트
+The Dvorak Simplified Keyboard was designed to increase typing speed and reduce finger fatigue through optimized key placement. Dr. August Dvorak and his brother-in-law Dr. William Dealey developed this layout in the 1930s after extensive research into typing efficiency and human anatomy. The layout places the most commonly used letters in the English language on the home row, reducing finger movement and increasing typing speed. Studies have shown that Dvorak users can achieve typing speeds up to 20% faster than QWERTY users with proper training. The keyboard layout is particularly beneficial for touch typists who want to maximize their efficiency and reduce the risk of repetitive strain injuries.
