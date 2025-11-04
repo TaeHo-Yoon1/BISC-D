@@ -72,23 +72,26 @@ class DvorakTypingTrainer:
             ",": "w",
             ".": "v",
             "/": "z",
-            "'": "[",
+            "'": "-",
+            '"': "_",
             "[": "]",
             "]": "\\",
             "\\": "`",
-            "`": "1",
-            "1": "2",
-            "2": "3",
-            "3": "4",
-            "4": "5",
-            "5": "6",
-            "6": "7",
-            "7": "8",
-            "8": "9",
-            "9": "0",
-            "0": "[",
+            "₩": "'",
+            "`": "`",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "0": "0",
             "-": "]",
             "=": "\\",
+            "+": "=",  # Shift+='=' 입력 시 '=' 출력되도록 추가
         }
 
         # 통계 데이터
@@ -102,6 +105,14 @@ class DvorakTypingTrainer:
             ["", "a", "o", "e", "u", "i", "d", "h", "t", "n", "s", "-", "", ""],
             ["", ";", "q", "j", "k", "x", "b", "m", "w", "v", "z", "", "", ""],
         ]
+
+        # 사이즈 설정 (사이드 패널과 키 표시 확대용)
+        self.side_panel_width = 340  # 기존 250에서 확대
+        self.keyboard_key_width = 3  # 기존 2에서 확대
+        self.keyboard_key_height = 2  # 기존 1에서 확대
+        self.keyboard_font_size = 9  # 기존 7에서 확대
+        self.keyboard_gap_px = 2  # 키 간격
+        self.keyboard_empty_size = 26  # 빈 공간 크기(기존 20에서 확대)
 
         self.setup_ui()
 
@@ -278,42 +289,118 @@ class DvorakTypingTrainer:
         desc_label.pack(pady=(20, 0))
 
     def select_language_and_difficulty(self, language):
-        """언어와 난이도 선택 처리"""
+        """언어 선택 후 난이도 선택 창을 표시하고 시작"""
         self.current_language = language
-        self.current_difficulty = "basic"  # 기본 난이도로 설정
-        self.is_coding_mode = True
 
-        # 언어 선택 화면 숨기기
-        self.language_selection_frame.destroy()
+        # 난이도 선택 창
+        difficulty_window = tk.Toplevel(self.root)
+        difficulty_window.title("난이도 선택")
+        difficulty_window.configure(bg="#2a2a2a")
+        difficulty_window.resizable(False, False)
 
-        # 좌/우/하단 패널 복원
-        if hasattr(self, "typing_frame"):
-            self.typing_frame.grid(
-                row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 10)
-            )
-        if hasattr(self, "side_frame"):
-            self.side_frame.grid(
-                row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 0)
-            )
-        if hasattr(self, "bottom_frame"):
-            self.bottom_frame.grid(
-                row=2, column=0, sticky=(tk.W, tk.E), padx=10, pady=5
-            )
+        # 창을 콘텐츠 크기에 맞춘 뒤 중앙 정렬
+        def center_window(win):
+            win.update_idletasks()
+            w = win.winfo_width() or 480
+            h = win.winfo_height() or 240
+            sw = win.winfo_screenwidth()
+            sh = win.winfo_screenheight()
+            x = int((sw - w) / 2)
+            y = int((sh - h) / 3)
+            win.geometry(f"{w}x{h}+{x}+{y}")
 
-        # 텍스트 위젯 다시 표시 (스크롤바는 숨김 유지)
-        self.text_display.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        if hasattr(self, "header_frame"):
-            self.header_frame.lift()
+        # 컨테이너
+        container = tk.Frame(difficulty_window, bg="#2a2a2a")
+        container.pack(padx=24, pady=20, fill=tk.BOTH, expand=True)
 
-        # 선택된 언어로 의미있는 코드 텍스트 로드
-        self.load_meaningful_code()
-        # 라이브 통계 초기화
-        if hasattr(self, "live_time_label"):
-            self.live_time_label.config(text="00:00")
-        if hasattr(self, "live_speed_label"):
-            self.live_speed_label.config(text="0타/분")
-        if hasattr(self, "live_acc_label"):
-            self.live_acc_label.config(text="0%")
+        title = tk.Label(
+            container,
+            text=f"{language.upper()} 난이도를 선택하세요",
+            font=("맑은 고딕", 18, "bold"),
+            bg="#2a2a2a",
+            fg="#00ff66",
+        )
+        title.pack(pady=(0, 16))
+
+        buttons_frame = tk.Frame(container, bg="#2a2a2a")
+        buttons_frame.pack(pady=4)
+
+        def proceed_with_difficulty(difficulty_key):
+            # 선택한 난이도로 코딩 연습 시작
+            self.current_difficulty = difficulty_key
+            self.is_coding_mode = True
+
+            # 언어 선택 화면 닫기
+            if hasattr(self, "language_selection_frame"):
+                try:
+                    self.language_selection_frame.destroy()
+                except Exception:
+                    pass
+
+            # 좌/우/하단 패널 복원
+            if hasattr(self, "typing_frame"):
+                self.typing_frame.grid(
+                    row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 10)
+                )
+            if hasattr(self, "side_frame"):
+                self.side_frame.grid(
+                    row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 0)
+                )
+            if hasattr(self, "bottom_frame"):
+                self.bottom_frame.grid(
+                    row=2, column=0, sticky=(tk.W, tk.E), padx=10, pady=5
+                )
+
+            # 텍스트 위젯 다시 표시 (스크롤바는 숨김 유지)
+            self.text_display.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+            if hasattr(self, "header_frame"):
+                self.header_frame.lift()
+
+            # 새 연습 시작 (coding_templates.json 사용)
+            self.start_new_practice()
+
+            # 라이브 통계 초기화
+            if hasattr(self, "live_time_label"):
+                self.live_time_label.config(text="00:00")
+            if hasattr(self, "live_speed_label"):
+                self.live_speed_label.config(text="0타/분")
+            if hasattr(self, "live_acc_label"):
+                self.live_acc_label.config(text="0%")
+
+            difficulty_window.destroy()
+
+        # 난이도 버튼들 (균일 간격, 다크 테마 스타일)
+        diff_defs = [
+            ("기본", "basic"),
+            ("중급", "intermediate"),
+            ("고급", "advanced"),
+        ]
+        for label, key in diff_defs:
+            tk.Button(
+                buttons_frame,
+                text=label,
+                width=12,
+                height=2,
+                font=("맑은 고딕", 12, "bold"),
+                bg="#1f1f1f",
+                fg="#00ff66",
+                activebackground="#333333",
+                activeforeground="#00ff99",
+                relief="raised",
+                bd=2,
+                highlightbackground="#00ff66",
+                highlightcolor="#00ff66",
+                command=lambda k=key: proceed_with_difficulty(k),
+            ).pack(side=tk.LEFT, padx=12)
+
+        # 단축키: 1/2/3로 선택, Esc로 닫기
+        difficulty_window.bind("1", lambda e: proceed_with_difficulty("basic"))
+        difficulty_window.bind("2", lambda e: proceed_with_difficulty("intermediate"))
+        difficulty_window.bind("3", lambda e: proceed_with_difficulty("advanced"))
+        difficulty_window.bind("<Escape>", lambda e: difficulty_window.destroy())
+
+        # 초기 중앙 배치
+        center_window(difficulty_window)
 
     def load_meaningful_code(self):
         """의미있는 코드만 로드"""
@@ -427,7 +514,7 @@ int main() {
     def setup_side_panel(self, parent):
         """오른쪽 사이드 패널"""
         self.side_frame = tk.Frame(
-            parent, bg="#2d2d2d", width=250, relief="sunken", bd=1
+            parent, bg="#2d2d2d", width=self.side_panel_width, relief="sunken", bd=1
         )
         self.side_frame.grid(
             row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 0)
@@ -497,7 +584,7 @@ int main() {
 
         # 전체 드보락 키보드 표시
         key_container = tk.Frame(keyboard_frame, bg="#1a1a1a", relief="sunken", bd=1)
-        key_container.pack(fill=tk.X, pady=5)
+        key_container.pack(fill=tk.X, pady=6)
 
         # 드보락 레이아웃 정의
         dvorak_rows = [
@@ -509,24 +596,28 @@ int main() {
 
         for row_keys in dvorak_rows:
             row_frame = tk.Frame(key_container, bg="#1a1a1a")
-            row_frame.pack(pady=1)
+            row_frame.pack(pady=self.keyboard_gap_px)
             for key in row_keys:
                 if key:
                     btn = tk.Label(
                         row_frame,
                         text=key,
-                        width=2,
-                        height=1,
-                        font=("맑은 고딕", 7),
+                        width=self.keyboard_key_width,
+                        height=self.keyboard_key_height,
+                        font=("맑은 고딕", self.keyboard_font_size),
                         bg="#404040",
                         fg="#00ff00",
                         relief="raised",
                         bd=1,
                     )
-                    btn.pack(side=tk.LEFT, padx=1)
+                    btn.pack(side=tk.LEFT, padx=self.keyboard_gap_px)
                 else:
                     # 빈 공간
-                    tk.Frame(row_frame, width=20, height=20).pack(side=tk.LEFT, padx=1)
+                    tk.Frame(
+                        row_frame,
+                        width=self.keyboard_empty_size,
+                        height=self.keyboard_empty_size,
+                    ).pack(side=tk.LEFT, padx=self.keyboard_gap_px)
 
     def setup_bottom_panel(self):
         """하단 패널 (통계 및 키보드 시각화)"""
@@ -711,7 +802,18 @@ int main() {
             and difficulty in self.coding_templates[language]
         ):
             templates = self.coding_templates[language][difficulty]
-            return random.choice(templates)
+            # 기본(basic)은 한 번에 더 길게: 해당 레벨의 앞부분 예문만 연결하여 표시
+            if (
+                difficulty == "basic"
+                and isinstance(templates, list)
+                and len(templates) > 0
+            ):
+                # 너무 길지 않도록 앞의 3개만 사용 (3개 미만이면 가능한 만큼)
+                return "\n\n".join(templates[:2])
+            # 그 외 레벨은 첫 번째 예문을 사용
+            if isinstance(templates, list) and len(templates) > 0:
+                return templates[0]
+            return f"{language} 언어의 {difficulty} 난이도 템플릿이 비어있습니다."
         else:
             return f"{language} 언어의 {difficulty} 난이도 템플릿을 찾을 수 없습니다."
 
