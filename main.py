@@ -36,10 +36,115 @@ class DvorakTypingTrainer:
 
         # 코딩 모드 관련 변수
         self.is_coding_mode = False
+        self.is_practice_mode = False  # 연습 모드 (점수 기록 없음)
         self.current_language = "python"
         self.current_difficulty = "basic"
         self.coding_templates = {}
         self.load_coding_templates()
+
+        # 연습 모드용 쉬운 단어 목록
+        self.practice_words = [
+            "the",
+            "be",
+            "to",
+            "of",
+            "and",
+            "a",
+            "in",
+            "that",
+            "have",
+            "i",
+            "it",
+            "for",
+            "not",
+            "on",
+            "with",
+            "he",
+            "as",
+            "you",
+            "do",
+            "at",
+            "this",
+            "but",
+            "his",
+            "by",
+            "from",
+            "they",
+            "we",
+            "say",
+            "her",
+            "she",
+            "or",
+            "an",
+            "will",
+            "my",
+            "one",
+            "all",
+            "would",
+            "there",
+            "their",
+            "what",
+            "so",
+            "up",
+            "out",
+            "if",
+            "about",
+            "who",
+            "get",
+            "which",
+            "go",
+            "me",
+            "when",
+            "make",
+            "can",
+            "like",
+            "time",
+            "no",
+            "just",
+            "him",
+            "know",
+            "take",
+            "people",
+            "into",
+            "year",
+            "your",
+            "good",
+            "some",
+            "could",
+            "them",
+            "see",
+            "other",
+            "than",
+            "then",
+            "now",
+            "look",
+            "only",
+            "come",
+            "its",
+            "over",
+            "think",
+            "also",
+            "back",
+            "after",
+            "use",
+            "two",
+            "how",
+            "our",
+            "work",
+            "first",
+            "well",
+            "way",
+            "even",
+            "new",
+            "want",
+            "because",
+            "any",
+            "these",
+            "give",
+            "day",
+            "most",
+            "us",
+        ]
 
         # 난이도별 점수 배율
         self.difficulty_multipliers = {
@@ -293,12 +398,47 @@ class DvorakTypingTrainer:
         # 제목
         title_label = tk.Label(
             self.language_selection_frame,
-            text="언어를 선택하세요",
+            text="모드를 선택하세요",
             font=("맑은 고딕", 24, "bold"),
             bg="#1a1a1a",
             fg="#00ff00",
         )
-        title_label.pack(pady=(0, 30))
+        title_label.pack(pady=(0, 20))
+
+        # 연습 모드 버튼
+        practice_btn = tk.Button(
+            self.language_selection_frame,
+            text="📝 연습 모드",
+            font=("맑은 고딕", 16, "bold"),
+            bg="#1a1a1a",
+            fg="#00ccff",
+            activebackground="#2d2d2d",
+            activeforeground="#00ccff",
+            relief="raised",
+            bd=2,
+            padx=40,
+            pady=15,
+            highlightbackground="#00ccff",
+            highlightcolor="#00ccff",
+            command=self.start_practice_mode,
+        )
+        practice_btn.pack(pady=10)
+
+        # 구분선
+        separator = tk.Frame(
+            self.language_selection_frame, bg="#404040", height=2, width=300
+        )
+        separator.pack(pady=15)
+
+        # 코딩 연습 모드 제목
+        coding_title = tk.Label(
+            self.language_selection_frame,
+            text="코딩 연습",
+            font=("맑은 고딕", 14, "bold"),
+            bg="#1a1a1a",
+            fg="#00cc00",
+        )
+        coding_title.pack(pady=(10, 10))
 
         # 언어 선택 버튼들
         languages = [("Python", "python"), ("Java", "java"), ("C++", "cpp")]
@@ -333,6 +473,67 @@ class DvorakTypingTrainer:
             fg="#00cc00",
         )
         desc_label.pack(pady=(20, 0))
+
+    def start_practice_mode(self):
+        """연습 모드 시작 (점수 기록 없음, 쉬운 단어)"""
+        self.is_practice_mode = True
+        self.is_coding_mode = False
+
+        # 모드 표시 업데이트
+        if hasattr(self, "mode_label"):
+            self.mode_label.config(text="[연습 모드]")
+
+        # 언어 선택 화면 닫기
+        if hasattr(self, "language_selection_frame"):
+            try:
+                self.language_selection_frame.destroy()
+            except Exception:
+                pass
+
+        # 좌/우/하단 패널 복원
+        if hasattr(self, "typing_frame"):
+            self.typing_frame.grid(
+                row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 10)
+            )
+        if hasattr(self, "side_frame"):
+            self.side_frame.grid(
+                row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 0)
+            )
+        if hasattr(self, "bottom_frame"):
+            self.bottom_frame.grid(
+                row=2, column=0, sticky=(tk.W, tk.E), padx=10, pady=5
+            )
+
+        # 텍스트 위젯 다시 표시
+        self.text_display.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        if hasattr(self, "header_frame"):
+            self.header_frame.lift()
+
+        # 연습 모드 텍스트 생성
+        self.current_text = self.generate_practice_mode_text()
+        self.display_text()
+        self.reset_practice()
+
+        # 라이브 통계 초기화
+        if hasattr(self, "live_time_label"):
+            self.live_time_label.config(text="00:00")
+        if hasattr(self, "live_speed_label"):
+            self.live_speed_label.config(text="0타/분")
+        if hasattr(self, "live_acc_label"):
+            self.live_acc_label.config(text="0%")
+
+    def generate_practice_mode_text(self):
+        """연습 모드용 쉬운 단어 텍스트 생성"""
+        import random
+
+        # 10-15개의 단어를 랜덤하게 선택하여 문장 생성 (더 짧게)
+        num_words = random.randint(2, 5)
+        selected_words = random.sample(
+            self.practice_words, min(num_words, len(self.practice_words))
+        )
+        # 단어들을 공백으로 연결
+        text = " ".join(selected_words)
+        return text
 
     def select_language_and_difficulty(self, language):
         """언어 선택 후 난이도 선택 창을 표시하고 시작"""
@@ -375,6 +576,12 @@ class DvorakTypingTrainer:
             # 선택한 난이도로 코딩 연습 시작
             self.current_difficulty = difficulty_key
             self.is_coding_mode = True
+            self.is_practice_mode = False  # 코딩 모드는 연습 모드 아님
+
+            # 모드 표시 업데이트
+            if hasattr(self, "mode_label"):
+                lang_name = language.upper()
+                self.mode_label.config(text=f"[{lang_name} - {difficulty_key}]")
 
             # 언어 선택 화면 닫기
             if hasattr(self, "language_selection_frame"):
@@ -904,9 +1111,14 @@ int main() {
 
     def start_new_practice(self):
         """새로운 연습 시작"""
-        if self.is_coding_mode:
+        if self.is_practice_mode:
+            # 연습 모드: 쉬운 단어 사용
+            self.current_text = self.generate_practice_mode_text()
+        elif self.is_coding_mode:
+            # 코딩 모드: 코딩 템플릿 사용
             self.current_text = self.generate_coding_text()
         else:
+            # 일반 타자 연습
             self.current_text = self.generate_practice_text()
 
         if self.current_text:
@@ -1031,44 +1243,49 @@ int main() {
 
     def setup_text_tags(self):
         """텍스트 태그 설정 (다크 테마)"""
+        # 모든 태그에 동일한 폰트를 명시적으로 설정하여 정렬 일관성 보장
+        base_font = ("Consolas", 14)
+
         # 원문 텍스트 (어두운 초록)
         self.text_display.tag_configure(
-            "original", foreground="#006600", background="#0a0a0a"
+            "original", foreground="#006600", background="#0a0a0a", font=base_font
         )
 
         # 사용자 입력 텍스트 (밝은 초록)
         self.text_display.tag_configure(
-            "user_input", foreground="#00ff00", background="#000000"
+            "user_input", foreground="#00ff00", background="#000000", font=base_font
         )
 
-        # 올바른 입력 (밝은 초록)
+        # 올바른 입력 (밝은 초록) - 배경색을 더 미묘하게 조정
         self.text_display.tag_configure(
-            "correct", foreground="#00ff00", background="#003300"
+            "correct", foreground="#00ff00", background="#001a00", font=base_font
         )
 
-        # 잘못된 입력 (빨강)
+        # 잘못된 입력 (빨강) - 배경색을 더 미묘하게 조정하여 정렬 문제 완화
         self.text_display.tag_configure(
-            "incorrect", foreground="#ff0000", background="#330000"
+            "incorrect", foreground="#ff6666", background="#1a0000", font=base_font
         )
 
-        # 현재 입력 위치 (노랑 배경)
+        # 현재 입력 위치 (노랑 배경) - 더 부드러운 색상으로 조정
         self.text_display.tag_configure(
-            "current", background="#333300", foreground="#ffff00"
+            "current", background="#2a2a00", foreground="#ffff99", font=base_font
         )
 
-        # 코딩 모드 태그들
+        # 코딩 모드 태그들 - 동일한 폰트 크기 유지
         self.text_display.tag_configure(
             "keyword", foreground="#00ffff", font=("Consolas", 14, "bold")
         )
-        self.text_display.tag_configure("string", foreground="#00ff00")
+        self.text_display.tag_configure("string", foreground="#00ff00", font=base_font)
         self.text_display.tag_configure(
             "comment", foreground="#666666", font=("Consolas", 14, "italic")
         )
-        self.text_display.tag_configure("number", foreground="#ffaa00")
-        self.text_display.tag_configure("function", foreground="#ff00ff")
-        # 캐럿(깜빡임) 표시용
+        self.text_display.tag_configure("number", foreground="#ffaa00", font=base_font)
         self.text_display.tag_configure(
-            "caret", background="#666600", foreground="#ffff00"
+            "function", foreground="#ff00ff", font=base_font
+        )
+        # 캐럿(깜빡임) 표시용 - 동일한 폰트로 정렬 일관성 보장
+        self.text_display.tag_configure(
+            "caret", background="#4a4a00", foreground="#ffff99", font=base_font
         )
 
     def start_caret_blink(self):
@@ -1147,16 +1364,22 @@ int main() {
         if not self.current_text:
             return
 
-        # 태그 설정
+        # 태그 설정 - 동일한 폰트 크기(14)로 통일하여 정렬 일관성 보장
         self.text_display.tag_configure(
-            "keyword", foreground="#0000FF", font=("Consolas", 12, "bold")
+            "keyword", foreground="#0000FF", font=("Consolas", 14, "bold")
         )
-        self.text_display.tag_configure("string", foreground="#008000")
         self.text_display.tag_configure(
-            "comment", foreground="#808080", font=("Consolas", 12, "italic")
+            "string", foreground="#008000", font=("Consolas", 14)
         )
-        self.text_display.tag_configure("number", foreground="#FF8000")
-        self.text_display.tag_configure("function", foreground="#800080")
+        self.text_display.tag_configure(
+            "comment", foreground="#808080", font=("Consolas", 14, "italic")
+        )
+        self.text_display.tag_configure(
+            "number", foreground="#FF8000", font=("Consolas", 14)
+        )
+        self.text_display.tag_configure(
+            "function", foreground="#800080", font=("Consolas", 14)
+        )
 
         # 언어별 키워드 정의
         keywords = self.get_language_keywords()
@@ -1729,89 +1952,104 @@ int main() {
                 else 0
             )
 
-            # 점수 계산
-            difficulty = self.current_difficulty if self.is_coding_mode else "typing"
-            final_score = self.calculate_score(final_wpm, final_accuracy, difficulty)
+            # 연습 모드가 아닐 때만 점수 기록
+            if not self.is_practice_mode:
+                # 점수 계산
+                difficulty = (
+                    self.current_difficulty if self.is_coding_mode else "typing"
+                )
+                final_score = self.calculate_score(
+                    final_wpm, final_accuracy, difficulty
+                )
 
-            # 이름 입력 다이얼로그
-            name_window = tk.Toplevel(self.root)
-            name_window.title("이름 입력")
-            name_window.configure(bg="#2a2a2a")
-            name_window.resizable(False, False)
-            name_window.transient(self.root)
-            name_window.grab_set()
+                # 이름 입력 다이얼로그
+                name_window = tk.Toplevel(self.root)
+                name_window.title("이름 입력")
+                name_window.configure(bg="#2a2a2a")
+                name_window.resizable(False, False)
+                name_window.transient(self.root)
+                name_window.grab_set()
 
-            # 창 중앙 배치
-            name_window.update_idletasks()
-            w = 400
-            h = 150
-            sw = name_window.winfo_screenwidth()
-            sh = name_window.winfo_screenheight()
-            x = int((sw - w) / 2)
-            y = int((sh - h) / 2)
-            name_window.geometry(f"{w}x{h}+{x}+{y}")
+                # 창 중앙 배치
+                name_window.update_idletasks()
+                w = 400
+                h = 150
+                sw = name_window.winfo_screenwidth()
+                sh = name_window.winfo_screenheight()
+                x = int((sw - w) / 2)
+                y = int((sh - h) / 2)
+                name_window.geometry(f"{w}x{h}+{x}+{y}")
 
-            container = tk.Frame(name_window, bg="#2a2a2a")
-            container.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
+                container = tk.Frame(name_window, bg="#2a2a2a")
+                container.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
 
-            tk.Label(
-                container,
-                text="이름을 입력하세요",
-                font=("맑은 고딕", 14, "bold"),
-                bg="#2a2a2a",
-                fg="#00ff00",
-            ).pack(pady=(0, 10))
+                tk.Label(
+                    container,
+                    text="이름을 입력하세요",
+                    font=("맑은 고딕", 14, "bold"),
+                    bg="#2a2a2a",
+                    fg="#00ff00",
+                ).pack(pady=(0, 10))
 
-            name_entry = tk.Entry(
-                container,
-                font=("맑은 고딕", 12),
-                bg="#1a1a1a",
-                fg="#00ff00",
-                insertbackground="#00ff00",
-                width=30,
-            )
-            name_entry.pack(pady=10)
-            name_entry.insert(0, self.user_name)
-            name_entry.select_range(0, tk.END)
-            name_entry.focus()
+                name_entry = tk.Entry(
+                    container,
+                    font=("맑은 고딕", 12),
+                    bg="#1a1a1a",
+                    fg="#00ff00",
+                    insertbackground="#00ff00",
+                    width=30,
+                )
+                name_entry.pack(pady=10)
+                name_entry.insert(0, self.user_name)
+                name_entry.select_range(0, tk.END)
+                name_entry.focus()
 
-            def save_name_and_close():
-                entered_name = name_entry.get().strip()
-                if entered_name:
-                    self.user_name = entered_name
-                    self.save_user_name()
-                else:
-                    self.user_name = "Player"
-                # 통계 저장
-                self.save_session_stats(final_wpm, final_accuracy, final_time)
-                name_window.destroy()
+                def save_name_and_close():
+                    entered_name = name_entry.get().strip()
+                    if entered_name:
+                        self.user_name = entered_name
+                        self.save_user_name()
+                    else:
+                        self.user_name = "Player"
+                    # 통계 저장
+                    self.save_session_stats(final_wpm, final_accuracy, final_time)
+                    name_window.destroy()
 
-                # 완료 메시지
-                diff_info = f" (난이도: {difficulty})" if self.is_coding_mode else ""
-                message = f"연습 완료!\n\n이름: {self.user_name}\n타이핑 속도: {final_wpm:.1f} WPM\n정확도: {final_accuracy:.1f}%\n시간: {final_time:.1f}초\n점수: {final_score:.2f}점{diff_info}"
+                    # 완료 메시지
+                    diff_info = (
+                        f" (난이도: {difficulty})" if self.is_coding_mode else ""
+                    )
+                    message = f"연습 완료!\n\n이름: {self.user_name}\n타이핑 속도: {final_wpm:.1f} WPM\n정확도: {final_accuracy:.1f}%\n시간: {final_time:.1f}초\n점수: {final_score:.2f}점{diff_info}"
+                    try:
+                        messagebox.showinfo("연습 완료", message)
+                    except Exception:
+                        pass
+
+                name_entry.bind("<Return>", lambda e: save_name_and_close())
+
+                button_frame = tk.Frame(container, bg="#2a2a2a")
+                button_frame.pack(pady=10)
+
+                tk.Button(
+                    button_frame,
+                    text="저장",
+                    command=save_name_and_close,
+                    font=("맑은 고딕", 11),
+                    bg="#004466",
+                    fg="#00ff00",
+                    relief="flat",
+                    padx=20,
+                    pady=5,
+                    activebackground="#006688",
+                    activeforeground="#00ff00",
+                ).pack(side=tk.LEFT, padx=5)
+            else:
+                # 연습 모드: 점수 기록 없이 간단한 완료 메시지만 표시
+                message = f"연습 완료!\n\n타이핑 속도: {final_wpm:.1f} WPM\n정확도: {final_accuracy:.1f}%\n시간: {final_time:.1f}초\n\n(연습 모드: 점수 기록 없음)"
                 try:
                     messagebox.showinfo("연습 완료", message)
                 except Exception:
                     pass
-
-            name_entry.bind("<Return>", lambda e: save_name_and_close())
-
-            button_frame = tk.Frame(container, bg="#2a2a2a")
-            button_frame.pack(pady=10)
-
-            tk.Button(
-                button_frame,
-                text="저장",
-                command=save_name_and_close,
-                font=("맑은 고딕", 11),
-                bg="#004466",
-                fg="#00ff00",
-                relief="flat",
-                padx=20,
-                pady=5,
-                activebackground="#006688",
-                activeforeground="#00ff00",
-            ).pack(side=tk.LEFT, padx=5)
 
             # status_label 제거됨
 
