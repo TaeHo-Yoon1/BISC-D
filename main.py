@@ -24,6 +24,10 @@ class DvorakTypingTrainer:
         self.correct_chars = 0
         self.total_chars = 0
 
+        # 사용자 이름 (기본값 또는 저장된 값)
+        self.user_name = "Player"
+        self.load_user_name()
+
         # 텍스트 줄별 관리
         self.text_lines = []
         self.user_lines = []
@@ -37,49 +41,60 @@ class DvorakTypingTrainer:
         self.coding_templates = {}
         self.load_coding_templates()
 
+        # 난이도별 점수 배율
+        self.difficulty_multipliers = {
+            "basic": 1.0,
+            "intermediate": 1.5,
+            "advanced": 2.0,
+            "typing": 1.0,  # 일반 타자연습 기본값
+        }
+
         # 드보락 키보드 매핑
         # 주의: OS에서 이미 드보락 레이아웃을 사용 중이라면 추가 매핑을 적용하면 이중 변환이 발생합니다.
         # 기본값을 활성화로 하여 QWERTY 레이아웃에서도 드보락 입력처럼 타이핑되도록 함
+        # QWERTY 키 -> Dvorak 문자 매핑
         self.use_dvorak_mapping = True
         self.dvorak_mapping = {
-            "q": "q",
-            "w": "w",
-            "e": "e",
-            "r": "p",
-            "t": "y",
-            "y": "f",
-            "u": "g",
-            "i": "c",
-            "o": "r",
-            "p": "l",
-            "a": "a",
-            "s": "o",
-            "d": "e",
-            "f": "u",
-            "g": "i",
-            "h": "d",
-            "j": "h",
-            "k": "t",
-            "l": "n",
-            ";": "s",
-            "z": ";",
-            "x": "q",
-            "c": "j",
-            "v": "k",
-            "b": "x",
-            "n": "b",
-            "m": "m",
-            ",": "w",
-            ".": "v",
-            "/": "z",
-            "'": "-",
-            '"': "_",
-            "[": "]",
-            "]": "\\",
-            "\\": "`",
-            "₩": "'",
-            "~": "\"",
-            "`": "`",
+            # 알파벳 키 (QWERTY -> Dvorak)
+            "q": "'",  # QWERTY q -> Dvorak '
+            "w": ",",  # QWERTY w -> Dvorak ,
+            "e": ".",  # QWERTY e -> Dvorak .
+            "r": "p",  # QWERTY r -> Dvorak p
+            "t": "y",  # QWERTY t -> Dvorak y
+            "y": "f",  # QWERTY y -> Dvorak f
+            "u": "g",  # QWERTY u -> Dvorak g
+            "i": "c",  # QWERTY i -> Dvorak c
+            "o": "r",  # QWERTY o -> Dvorak r
+            "p": "l",  # QWERTY p -> Dvorak l
+            "a": "a",  # QWERTY a -> Dvorak a
+            "s": "o",  # QWERTY s -> Dvorak o
+            "d": "e",  # QWERTY d -> Dvorak e
+            "f": "u",  # QWERTY f -> Dvorak u
+            "g": "i",  # QWERTY g -> Dvorak i
+            "h": "d",  # QWERTY h -> Dvorak d
+            "j": "h",  # QWERTY j -> Dvorak h
+            "k": "t",  # QWERTY k -> Dvorak t
+            "l": "n",  # QWERTY l -> Dvorak n
+            "z": ";",  # QWERTY z -> Dvorak ;
+            "x": "q",  # QWERTY x -> Dvorak q
+            "c": "j",  # QWERTY c -> Dvorak j
+            "v": "k",  # QWERTY v -> Dvorak k
+            "b": "x",  # QWERTY b -> Dvorak x
+            "n": "b",  # QWERTY n -> Dvorak b
+            "m": "m",  # QWERTY m -> Dvorak m
+            # 특수문자 키 (QWERTY -> Dvorak)
+            ";": "s",  # QWERTY ; -> Dvorak s
+            "'": "-",  # QWERTY ' -> Dvorak -
+            ",": "w",  # QWERTY , -> Dvorak w
+            ".": "v",  # QWERTY . -> Dvorak v
+            "/": "z",  # QWERTY / -> Dvorak z
+            "[": "/",  # QWERTY [ -> Dvorak /
+            "]": "=",  # QWERTY ] -> Dvorak =
+            "\\": "\\",  # QWERTY \ -> Dvorak \
+            "`": "`",  # QWERTY ` -> Dvorak `
+            "-": "[",  # QWERTY - -> Dvorak [
+            "=": "]",  # QWERTY = -> Dvorak ]
+            # 숫자 키 (변화 없음)
             "1": "1",
             "2": "2",
             "3": "3",
@@ -90,19 +105,49 @@ class DvorakTypingTrainer:
             "8": "8",
             "9": "9",
             "0": "0",
-            "-": "]",
-            "=": "\\",
-            "+": "=",  # Shift+='=' 입력 시 '=' 출력되도록 추가
+            # Shift 조합 (QWERTY Shift+키 -> Dvorak Shift+문자)
+            # 알파벳 Shift 조합
+            "Q": '"',  # QWERTY Shift+q -> Dvorak "
+            "W": "<",  # QWERTY Shift+w -> Dvorak <
+            "E": ">",  # QWERTY Shift+e -> Dvorak >
+            "R": "P",  # QWERTY Shift+r -> Dvorak P
+            "T": "Y",  # QWERTY Shift+t -> Dvorak Y
+            "Y": "F",  # QWERTY Shift+y -> Dvorak F
+            "U": "G",  # QWERTY Shift+u -> Dvorak G
+            "I": "C",  # QWERTY Shift+i -> Dvorak C
+            "O": "R",  # QWERTY Shift+o -> Dvorak R
+            "P": "L",  # QWERTY Shift+p -> Dvorak L
+            "A": "A",  # QWERTY Shift+a -> Dvorak A
+            "S": "O",  # QWERTY Shift+s -> Dvorak O
+            "D": "E",  # QWERTY Shift+d -> Dvorak E
+            "F": "U",  # QWERTY Shift+f -> Dvorak U
+            "G": "I",  # QWERTY Shift+g -> Dvorak I
+            "H": "D",  # QWERTY Shift+h -> Dvorak D
+            "J": "H",  # QWERTY Shift+j -> Dvorak H
+            "K": "T",  # QWERTY Shift+k -> Dvorak T
+            "L": "N",  # QWERTY Shift+l -> Dvorak N
+            "Z": ":",  # QWERTY Shift+z -> Dvorak :
+            "X": "Q",  # QWERTY Shift+x -> Dvorak Q
+            "C": "J",  # QWERTY Shift+c -> Dvorak J
+            "V": "K",  # QWERTY Shift+v -> Dvorak K
+            "B": "X",  # QWERTY Shift+b -> Dvorak X
+            "N": "B",  # QWERTY Shift+n -> Dvorak B
+            "M": "M",  # QWERTY Shift+m -> Dvorak M
+            "<": "W",
+            ">": "V",
+            "?": "Z",
+            ":": "S",
+            '"': "_",
         }
 
         # 통계 데이터
         self.stats_file = "typing_stats.json"
         self.load_stats()
 
-        # 드보락 레이아웃 표시
+        # 드보락 레이아웃 표시 (이미지 기준)
         self.dvorak_layout = [
             ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "[", "]", "\\"],
-            ["", "q", "w", "e", ".", "p", "y", "f", "g", "c", "r", "l", "", ""],
+            ["", "'", ",", ".", "p", "y", "f", "g", "c", "r", "l", "/", "=", "\\"],
             ["", "a", "o", "e", "u", "i", "d", "h", "t", "n", "s", "-", "", ""],
             ["", ";", "q", "j", "k", "x", "b", "m", "w", "v", "z", "", "", ""],
         ]
@@ -587,12 +632,73 @@ int main() {
         key_container = tk.Frame(keyboard_frame, bg="#1a1a1a", relief="sunken", bd=1)
         key_container.pack(fill=tk.X, pady=6)
 
-        # 드보락 레이아웃 정의
+        # 드보락 레이아웃 정의 (이미지 기준, Shift 조합 포함)
+        # 각 키는 (기본문자, Shift문자) 튜플 또는 단일 문자
         dvorak_rows = [
-            ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "[", "]", "\\"],
-            ["", "q", "w", "e", ".", "p", "y", "f", "g", "c", "r", "l", "", ""],
-            ["", "a", "o", "e", "u", "i", "d", "h", "t", "n", "s", "-", "", ""],
-            ["", ";", "q", "j", "k", "x", "b", "m", "w", "v", "z", "", "", ""],
+            [
+                ("`", "~"),
+                ("1", "!"),
+                ("2", "@"),
+                ("3", "#"),
+                ("4", "$"),
+                ("5", "%"),
+                ("6", "^"),
+                ("7", "&"),
+                ("8", "*"),
+                ("9", "("),
+                ("0", ")"),
+                ("[", "{"),
+                ("]", "}"),
+                ("\\", "|"),
+            ],
+            [
+                "",
+                ("'", '"'),
+                (",", "<"),
+                (".", ">"),
+                ("p", "P"),
+                ("y", "Y"),
+                ("f", "F"),
+                ("g", "G"),
+                ("c", "C"),
+                ("r", "R"),
+                ("l", "L"),
+                ("/", "?"),
+                ("=", "+"),
+                ("\\", "|"),
+            ],
+            [
+                "",
+                ("a", "A"),
+                ("o", "O"),
+                ("e", "E"),
+                ("u", "U"),
+                ("i", "I"),
+                ("d", "D"),
+                ("h", "H"),
+                ("t", "T"),
+                ("n", "N"),
+                ("s", "S"),
+                ("-", "_"),
+                "",
+                "",
+            ],
+            [
+                "",
+                (";", ":"),
+                ("q", "Q"),
+                ("j", "J"),
+                ("k", "K"),
+                ("x", "X"),
+                ("b", "B"),
+                ("m", "M"),
+                ("w", "W"),
+                ("v", "V"),
+                ("z", "Z"),
+                "",
+                "",
+                "",
+            ],
         ]
 
         for row_keys in dvorak_rows:
@@ -600,18 +706,34 @@ int main() {
             row_frame.pack(pady=self.keyboard_gap_px)
             for key in row_keys:
                 if key:
-                    btn = tk.Label(
-                        row_frame,
-                        text=key,
-                        width=self.keyboard_key_width,
-                        height=self.keyboard_key_height,
-                        font=("맑은 고딕", self.keyboard_font_size),
-                        bg="#404040",
-                        fg="#00ff00",
-                        relief="raised",
-                        bd=1,
-                    )
-                    btn.pack(side=tk.LEFT, padx=self.keyboard_gap_px)
+                    if isinstance(key, tuple):
+                        # Shift 조합이 있는 경우: 위에 Shift 문자, 아래에 기본 문자
+                        key_label = tk.Label(
+                            row_frame,
+                            text=f"{key[1]}\n{key[0]}",  # Shift 문자 위, 기본 문자 아래
+                            width=self.keyboard_key_width,
+                            height=self.keyboard_key_height,
+                            font=("맑은 고딕", self.keyboard_font_size - 1),
+                            bg="#404040",
+                            fg="#00ff00",
+                            relief="raised",
+                            bd=1,
+                            justify=tk.CENTER,
+                        )
+                    else:
+                        # 단일 문자
+                        key_label = tk.Label(
+                            row_frame,
+                            text=key,
+                            width=self.keyboard_key_width,
+                            height=self.keyboard_key_height,
+                            font=("맑은 고딕", self.keyboard_font_size),
+                            bg="#404040",
+                            fg="#00ff00",
+                            relief="raised",
+                            bd=1,
+                        )
+                    key_label.pack(side=tk.LEFT, padx=self.keyboard_gap_px)
                 else:
                     # 빈 공간
                     tk.Frame(
@@ -687,6 +809,20 @@ int main() {
         # 컨트롤 버튼
         control_frame = tk.Frame(self.bottom_frame, bg="#2d2d2d")
         control_frame.pack(side=tk.RIGHT, padx=20, pady=15)
+
+        tk.Button(
+            control_frame,
+            text="점수판",
+            command=self.show_leaderboard,
+            font=("맑은 고딕", 11),
+            bg="#006600",
+            fg="#00ff00",
+            relief="flat",
+            padx=15,
+            pady=8,
+            activebackground="#008800",
+            activeforeground="#00ff00",
+        ).pack(side=tk.LEFT, padx=5)
 
         tk.Button(
             control_frame,
@@ -1288,12 +1424,14 @@ int main() {
             self.handle_backspace()
             return "break"
 
-        # 일반 문자 입력
+        # 일반 문자 입력 (Shift 조합은 event.char에 이미 반영됨)
         if (
             len(event.char) == 1
             and event.char.isprintable()
             and len(self.text_lines) > 0
         ):
+            # event.char에 이미 Shift 조합이 반영되어 있음
+            # 예: Shift+Q -> "Q", Shift+1 -> "!", Shift+, -> "<"
             self.handle_char_input(event.char)
             return "break"
 
@@ -1306,9 +1444,29 @@ int main() {
 
         # 드보락 키보드 매핑 적용
         if self.use_dvorak_mapping:
-            dvorak_char = self.dvorak_mapping.get(char.lower(), char)
-            if char.isupper():
-                dvorak_char = dvorak_char.upper()
+            # 먼저 직접 매핑에서 찾기 (대문자, Shift 조합 포함)
+            if char in self.dvorak_mapping:
+                dvorak_char = self.dvorak_mapping[char]
+            elif char.isalpha() and char.islower():
+                # 소문자 알파벳인 경우
+                if char in self.dvorak_mapping:
+                    dvorak_char = self.dvorak_mapping[char]
+                else:
+                    dvorak_char = char
+            elif char.isalpha() and char.isupper():
+                # 대문자 알파벳인 경우 - 직접 매핑에서 찾거나 소문자로 변환
+                if char in self.dvorak_mapping:
+                    dvorak_char = self.dvorak_mapping[char]
+                else:
+                    # 소문자로 변환하여 매핑 후 대문자로 변환
+                    base_char = char.lower()
+                    if base_char in self.dvorak_mapping:
+                        dvorak_char = self.dvorak_mapping[base_char].upper()
+                    else:
+                        dvorak_char = char
+            else:
+                # 특수문자는 직접 매핑에서 찾거나 원래 문자 사용
+                dvorak_char = self.dvorak_mapping.get(char, char)
         else:
             dvorak_char = char
 
@@ -1571,15 +1729,89 @@ int main() {
                 else 0
             )
 
-            # 통계 저장
-            self.save_session_stats(final_wpm, final_accuracy, final_time)
+            # 점수 계산
+            difficulty = self.current_difficulty if self.is_coding_mode else "typing"
+            final_score = self.calculate_score(final_wpm, final_accuracy, difficulty)
 
-            # 완료 메시지
-            message = f"연습 완료!\n\n타이핑 속도: {final_wpm:.1f} WPM\n정확도: {final_accuracy:.1f}%\n시간: {final_time:.1f}초"
-            try:
-                messagebox.showinfo("연습 완료", message)
-            except Exception:
-                pass
+            # 이름 입력 다이얼로그
+            name_window = tk.Toplevel(self.root)
+            name_window.title("이름 입력")
+            name_window.configure(bg="#2a2a2a")
+            name_window.resizable(False, False)
+            name_window.transient(self.root)
+            name_window.grab_set()
+
+            # 창 중앙 배치
+            name_window.update_idletasks()
+            w = 400
+            h = 150
+            sw = name_window.winfo_screenwidth()
+            sh = name_window.winfo_screenheight()
+            x = int((sw - w) / 2)
+            y = int((sh - h) / 2)
+            name_window.geometry(f"{w}x{h}+{x}+{y}")
+
+            container = tk.Frame(name_window, bg="#2a2a2a")
+            container.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
+
+            tk.Label(
+                container,
+                text="이름을 입력하세요",
+                font=("맑은 고딕", 14, "bold"),
+                bg="#2a2a2a",
+                fg="#00ff00",
+            ).pack(pady=(0, 10))
+
+            name_entry = tk.Entry(
+                container,
+                font=("맑은 고딕", 12),
+                bg="#1a1a1a",
+                fg="#00ff00",
+                insertbackground="#00ff00",
+                width=30,
+            )
+            name_entry.pack(pady=10)
+            name_entry.insert(0, self.user_name)
+            name_entry.select_range(0, tk.END)
+            name_entry.focus()
+
+            def save_name_and_close():
+                entered_name = name_entry.get().strip()
+                if entered_name:
+                    self.user_name = entered_name
+                    self.save_user_name()
+                else:
+                    self.user_name = "Player"
+                # 통계 저장
+                self.save_session_stats(final_wpm, final_accuracy, final_time)
+                name_window.destroy()
+
+                # 완료 메시지
+                diff_info = f" (난이도: {difficulty})" if self.is_coding_mode else ""
+                message = f"연습 완료!\n\n이름: {self.user_name}\n타이핑 속도: {final_wpm:.1f} WPM\n정확도: {final_accuracy:.1f}%\n시간: {final_time:.1f}초\n점수: {final_score:.2f}점{diff_info}"
+                try:
+                    messagebox.showinfo("연습 완료", message)
+                except Exception:
+                    pass
+
+            name_entry.bind("<Return>", lambda e: save_name_and_close())
+
+            button_frame = tk.Frame(container, bg="#2a2a2a")
+            button_frame.pack(pady=10)
+
+            tk.Button(
+                button_frame,
+                text="저장",
+                command=save_name_and_close,
+                font=("맑은 고딕", 11),
+                bg="#004466",
+                fg="#00ff00",
+                relief="flat",
+                padx=20,
+                pady=5,
+                activebackground="#006688",
+                activeforeground="#00ff00",
+            ).pack(side=tk.LEFT, padx=5)
 
             # status_label 제거됨
 
@@ -1831,11 +2063,27 @@ int main() {
                 sum(s["accuracy"] for s in self.stats_data["sessions"]) / total_sessions
             )
 
+            # 전체 평균 점수 계산
+            avg_score = (
+                sum(s.get("score", 0) for s in self.stats_data["sessions"])
+                / total_sessions
+                if all("score" in s for s in self.stats_data["sessions"])
+                else 0
+            )
+            # 최고 점수
+            max_score = (
+                max(s.get("score", 0) for s in self.stats_data["sessions"])
+                if self.stats_data["sessions"]
+                else 0
+            )
+
             stats_content += f"총 연습 세션: {total_sessions}회\n"
             stats_content += f"  - 일반 타자연습: {len(typing_sessions)}회\n"
             stats_content += f"  - 코딩 연습: {len(coding_sessions)}회\n"
             stats_content += f"전체 평균 속도: {avg_wpm:.1f} WPM\n"
-            stats_content += f"전체 평균 정확도: {avg_accuracy:.1f}%\n\n"
+            stats_content += f"전체 평균 정확도: {avg_accuracy:.1f}%\n"
+            stats_content += f"전체 평균 점수: {avg_score:.2f}점\n"
+            stats_content += f"최고 점수: {max_score:.2f}점\n\n"
 
             # 일반 타자연습 통계
             if typing_sessions:
@@ -1845,7 +2093,13 @@ int main() {
                 typing_avg_accuracy = sum(s["accuracy"] for s in typing_sessions) / len(
                     typing_sessions
                 )
-                stats_content += f"일반 타자연습 평균: {typing_avg_wpm:.1f} WPM, {typing_avg_accuracy:.1f}%\n"
+                typing_avg_score = (
+                    sum(s.get("score", 0) for s in typing_sessions)
+                    / len(typing_sessions)
+                    if all("score" in s for s in typing_sessions)
+                    else 0
+                )
+                stats_content += f"일반 타자연습 평균: {typing_avg_wpm:.1f} WPM, {typing_avg_accuracy:.1f}%, 점수: {typing_avg_score:.2f}점\n"
 
             # 코딩 연습 통계
             if coding_sessions:
@@ -1855,7 +2109,13 @@ int main() {
                 coding_avg_accuracy = sum(s["accuracy"] for s in coding_sessions) / len(
                     coding_sessions
                 )
-                stats_content += f"코딩 연습 평균: {coding_avg_wpm:.1f} WPM, {coding_avg_accuracy:.1f}%\n"
+                coding_avg_score = (
+                    sum(s.get("score", 0) for s in coding_sessions)
+                    / len(coding_sessions)
+                    if all("score" in s for s in coding_sessions)
+                    else 0
+                )
+                stats_content += f"코딩 연습 평균: {coding_avg_wpm:.1f} WPM, {coding_avg_accuracy:.1f}%, 점수: {coding_avg_score:.2f}점\n"
 
                 # 언어별 통계
                 languages = {}
@@ -1872,17 +2132,29 @@ int main() {
                         lang_avg_accuracy = sum(s["accuracy"] for s in sessions) / len(
                             sessions
                         )
-                        stats_content += f"  {lang}: {lang_avg_wpm:.1f} WPM, {lang_avg_accuracy:.1f}% ({len(sessions)}회)\n"
+                        lang_avg_score = (
+                            sum(s.get("score", 0) for s in sessions) / len(sessions)
+                            if all("score" in s for s in sessions)
+                            else 0
+                        )
+                        stats_content += f"  {lang}: {lang_avg_wpm:.1f} WPM, {lang_avg_accuracy:.1f}%, 점수: {lang_avg_score:.2f}점 ({len(sessions)}회)\n"
 
             stats_content += "\n최근 10회 연습 기록:\n"
-            stats_content += "-" * 70 + "\n"
+            stats_content += "-" * 80 + "\n"
 
             for i, session in enumerate(self.stats_data["sessions"][-10:], 1):
                 mode = session.get("mode", "typing")
+                name = session.get("name", "Unknown")
                 lang_info = (
                     f" ({session.get('language', '')})" if mode == "coding" else ""
                 )
-                stats_content += f"{i:2d}. [{mode.upper()}{lang_info}] {session['wpm']:5.1f} WPM | {session['accuracy']:5.1f}% | {session['time']:5.1f}초 | {session['date']}\n"
+                diff_info = (
+                    f" [{session.get('difficulty', '')}]"
+                    if mode == "coding" and session.get("difficulty")
+                    else ""
+                )
+                score = session.get("score", 0)
+                stats_content += f"{i:2d}. [{name}] [{mode.upper()}{lang_info}{diff_info}] {session['wpm']:5.1f} WPM | {session['accuracy']:5.1f}% | 점수: {score:6.2f}점 | {session['time']:5.1f}초 | {session['date']}\n"
         else:
             stats_content += "아직 연습 기록이 없습니다.\n"
             stats_content += "연습을 시작하여 통계를 쌓아보세요!"
@@ -1955,7 +2227,17 @@ int main() {
         try:
             if os.path.exists(self.stats_file):
                 with open(self.stats_file, "r", encoding="utf-8") as file:
-                    self.stats_data = json.load(file)
+                    data = json.load(file)
+                    # 이전 형식 호환성
+                    if "sessions" in data:
+                        self.stats_data = data
+                    else:
+                        self.stats_data = {
+                            "sessions": data if isinstance(data, list) else []
+                        }
+                    # 사용자 이름 로드
+                    if "user_name" in data:
+                        self.user_name = data["user_name"]
             else:
                 self.stats_data = {"sessions": []}
         except Exception as e:
@@ -1964,25 +2246,195 @@ int main() {
     def save_stats(self):
         """통계 저장"""
         try:
+            # user_name도 함께 저장
+            data_to_save = self.stats_data.copy()
+            data_to_save["user_name"] = self.user_name
             with open(self.stats_file, "w", encoding="utf-8") as file:
-                json.dump(self.stats_data, file, ensure_ascii=False, indent=2)
+                json.dump(data_to_save, file, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"통계 저장 오류: {e}")
 
+    def calculate_score(self, wpm, accuracy, difficulty=None):
+        """난이도별 배율을 적용한 점수 계산"""
+        if difficulty is None:
+            difficulty = self.current_difficulty if self.is_coding_mode else "typing"
+
+        multiplier = self.difficulty_multipliers.get(difficulty, 1.0)
+        # 점수 = WPM * (정확도/100) * 난이도배율
+        score = wpm * (accuracy / 100.0) * multiplier
+        return round(score, 2)
+
     def save_session_stats(self, wpm, accuracy, time_taken):
         """세션 통계 저장"""
+        difficulty = self.current_difficulty if self.is_coding_mode else "typing"
+        score = self.calculate_score(wpm, accuracy, difficulty)
+
         session_data = {
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "name": self.user_name,
             "wpm": wpm,
             "accuracy": accuracy,
             "time": time_taken,
+            "score": score,
             "mode": "coding" if self.is_coding_mode else "typing",
             "language": self.current_language if self.is_coding_mode else None,
-            "difficulty": self.current_difficulty if self.is_coding_mode else None,
+            "difficulty": difficulty if self.is_coding_mode else None,
         }
 
         self.stats_data["sessions"].append(session_data)
         self.save_stats()
+
+    def load_user_name(self):
+        """사용자 이름 로드"""
+        try:
+            if os.path.exists(self.stats_file):
+                with open(self.stats_file, "r", encoding="utf-8") as file:
+                    data = json.load(file)
+                    if "user_name" in data:
+                        self.user_name = data["user_name"]
+        except Exception:
+            pass
+
+    def save_user_name(self):
+        """사용자 이름 저장"""
+        try:
+            if os.path.exists(self.stats_file):
+                with open(self.stats_file, "r", encoding="utf-8") as file:
+                    data = json.load(file)
+            else:
+                data = {"sessions": []}
+            data["user_name"] = self.user_name
+            with open(self.stats_file, "w", encoding="utf-8") as file:
+                json.dump(data, file, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def show_leaderboard(self):
+        """점수판 UI 표시"""
+        leaderboard_window = tk.Toplevel(self.root)
+        leaderboard_window.title("점수판")
+        leaderboard_window.geometry("800x600")
+        leaderboard_window.configure(bg="#1a1a1a")
+
+        # 헤더
+        header_frame = tk.Frame(leaderboard_window, bg="#2d2d2d", height=60)
+        header_frame.pack(fill=tk.X)
+        header_frame.pack_propagate(False)
+
+        title_label = tk.Label(
+            header_frame,
+            text="🏆 점수판 🏆",
+            font=("맑은 고딕", 20, "bold"),
+            bg="#2d2d2d",
+            fg="#00ff00",
+        )
+        title_label.pack(pady=15)
+
+        # 필터 프레임
+        filter_frame = tk.Frame(leaderboard_window, bg="#1a1a1a")
+        filter_frame.pack(fill=tk.X, padx=20, pady=10)
+
+        tk.Label(
+            filter_frame,
+            text="정렬 기준:",
+            font=("맑은 고딕", 11),
+            bg="#1a1a1a",
+            fg="#00cc00",
+        ).pack(side=tk.LEFT, padx=5)
+
+        sort_var = tk.StringVar(value="score")
+        sort_options = [
+            ("점수", "score"),
+            ("WPM", "wpm"),
+            ("정확도", "accuracy"),
+            ("날짜", "date"),
+        ]
+
+        for text, value in sort_options:
+            tk.Radiobutton(
+                filter_frame,
+                text=text,
+                variable=sort_var,
+                value=value,
+                font=("맑은 고딕", 10),
+                bg="#1a1a1a",
+                fg="#00ff00",
+                selectcolor="#2d2d2d",
+                activebackground="#1a1a1a",
+                activeforeground="#00ff00",
+                command=lambda: update_leaderboard(),
+            ).pack(side=tk.LEFT, padx=10)
+
+        # 리더보드 표시 영역
+        list_frame = tk.Frame(leaderboard_window, bg="#1a1a1a")
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+
+        # 스크롤바
+        scrollbar = ttk.Scrollbar(list_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # 리스트박스
+        leaderboard_listbox = tk.Listbox(
+            list_frame,
+            font=("Consolas", 11),
+            bg="#000000",
+            fg="#00ff00",
+            selectbackground="#004466",
+            selectforeground="#00ff00",
+            yscrollcommand=scrollbar.set,
+            relief="flat",
+            bd=0,
+        )
+        leaderboard_listbox.pack(fill=tk.BOTH, expand=True)
+
+        scrollbar.config(command=leaderboard_listbox.yview)
+
+        def update_leaderboard():
+            leaderboard_listbox.delete(0, tk.END)
+
+            if not hasattr(self, "stats_data") or not self.stats_data.get("sessions"):
+                leaderboard_listbox.insert(
+                    tk.END, "아직 기록이 없습니다. 연습을 시작해보세요!"
+                )
+                return
+
+            # 세션 복사 및 정렬
+            sessions = self.stats_data["sessions"].copy()
+            sort_key = sort_var.get()
+
+            if sort_key == "score":
+                sessions.sort(key=lambda x: x.get("score", 0), reverse=True)
+            elif sort_key == "wpm":
+                sessions.sort(key=lambda x: x.get("wpm", 0), reverse=True)
+            elif sort_key == "accuracy":
+                sessions.sort(key=lambda x: x.get("accuracy", 0), reverse=True)
+            elif sort_key == "date":
+                sessions.sort(key=lambda x: x.get("date", ""), reverse=True)
+
+            # 헤더
+            header = f"{'순위':<6} {'이름':<15} {'점수':<10} {'WPM':<8} {'정확도':<8} {'날짜':<20}"
+            leaderboard_listbox.insert(tk.END, header)
+            leaderboard_listbox.insert(tk.END, "-" * 80)
+
+            # 상위 50개만 표시
+            for i, session in enumerate(sessions[:50], 1):
+                name = session.get("name", "Unknown")
+                score = session.get("score", 0)
+                wpm = session.get("wpm", 0)
+                accuracy = session.get("accuracy", 0)
+                date = session.get("date", "")
+
+                # 현재 사용자 강조 표시
+                if name == self.user_name:
+                    prefix = "★ "
+                else:
+                    prefix = "  "
+
+                row = f"{prefix}{i:<4} {name:<15} {score:<10.2f} {wpm:<8.1f} {accuracy:<8.1f}% {date}"
+                leaderboard_listbox.insert(tk.END, row)
+
+        # 초기 로드
+        update_leaderboard()
 
     def run(self):
         """프로그램 실행"""
