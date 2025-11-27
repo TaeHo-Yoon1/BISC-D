@@ -2671,6 +2671,52 @@ int main() {
                 row = f"{prefix}{i:<4} {name:<15} {score:<10.2f} {wpm:<8.1f} {accuracy:<8.1f}% {date}"
                 leaderboard_listbox.insert(tk.END, row)
 
+        # 하단 버튼 프레임
+        button_frame = tk.Frame(leaderboard_window, bg="#1a1a1a")
+        button_frame.pack(fill=tk.X, padx=20, pady=10)
+
+        def reset_leaderboard():
+            """점수판 초기화"""
+            if messagebox.askyesno(
+                "확인",
+                "모든 점수 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+            ):
+                self.stats_data = {"sessions": []}
+                self.save_stats()
+                messagebox.showinfo("완료", "점수판이 초기화되었습니다.")
+                update_leaderboard()  # 점수판 새로고침
+
+        reset_button = tk.Button(
+            button_frame,
+            text="점수판 초기화",
+            font=("맑은 고딕", 12, "bold"),
+            bg="#cc0000",
+            fg="#ffffff",
+            activebackground="#ff0000",
+            activeforeground="#ffffff",
+            relief="flat",
+            padx=20,
+            pady=8,
+            command=reset_leaderboard,
+        )
+        reset_button.pack(side=tk.RIGHT, padx=5)
+
+        # 새로고침 버튼
+        refresh_button = tk.Button(
+            button_frame,
+            text="새로고침",
+            font=("맑은 고딕", 12),
+            bg="#2d2d2d",
+            fg="#00ff00",
+            activebackground="#3d3d3d",
+            activeforeground="#00ff00",
+            relief="flat",
+            padx=20,
+            pady=8,
+            command=update_leaderboard,
+        )
+        refresh_button.pack(side=tk.RIGHT, padx=5)
+
         # 초기 로드
         update_leaderboard()
 
