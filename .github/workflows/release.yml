@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-release:
     runs-on: windows-latest
+    permissions:
+      contents: write  # 릴리즈 생성을 위한 권한
     
     steps:
     - name: Checkout code
