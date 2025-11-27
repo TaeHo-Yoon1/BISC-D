@@ -1064,26 +1064,85 @@ int main() {
         # 입력 영역은 이제 별도로 필요하지 않음 (텍스트 위젯에서 직접 처리)
         pass
 
-    def load_coding_templates(self):
-        """코딩 템플릿 로드 (PyInstaller 환경 지원)"""
+    def resource_path(self, relative_path):
+        """리소스 파일 경로 반환 (PyInstaller 환경 지원)"""
         try:
-            # PyInstaller로 빌드된 경우 sys._MEIPASS 사용
+            # PyInstaller로 빌드된 경우
             if getattr(sys, "frozen", False):
-                # 실행 파일로 빌드된 경우
                 base_path = sys._MEIPASS
             else:
                 # 개발 환경
                 base_path = os.path.dirname(os.path.abspath(__file__))
+            return os.path.join(base_path, relative_path)
+        except Exception:
+            # 폴백: 현재 작업 디렉토리
+            return os.path.join(os.getcwd(), relative_path)
 
-            template_path = os.path.join(base_path, "coding_templates.json")
-            with open(template_path, "r", encoding="utf-8") as file:
-                self.coding_templates = json.load(file)
-        except FileNotFoundError:
-            self.coding_templates = {}
-            print("코딩 템플릿 파일을 찾을 수 없습니다.")
-        except Exception as e:
-            self.coding_templates = {}
-            print(f"코딩 템플릿 로드 오류: {e}")
+    def load_coding_templates(self):
+        """코딩 템플릿 로드 (PyInstaller 환경 지원)"""
+        # 여러 경로 시도
+        possible_paths = [
+            self.resource_path("coding_templates.json"),
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "coding_templates.json"
+            ),
+            os.path.join(os.getcwd(), "coding_templates.json"),
+        ]
+
+        # PyInstaller 환경에서 추가 경로 시도
+        if getattr(sys, "frozen", False):
+            try:
+                # 실행 파일이 있는 디렉토리
+                exe_dir = os.path.dirname(sys.executable)
+                possible_paths.insert(0, os.path.join(exe_dir, "coding_templates.json"))
+            except Exception:
+                pass
+
+        for template_path in possible_paths:
+            try:
+                if os.path.exists(template_path):
+                    with open(template_path, "r", encoding="utf-8") as file:
+                        self.coding_templates = json.load(file)
+                        # 디버깅 정보를 파일로 저장 (windowed 모드에서도 확인 가능)
+                        try:
+                            debug_log = os.path.join(
+                                os.path.expanduser("~"), "dvorak_trainer_debug.log"
+                            )
+                            with open(debug_log, "w", encoding="utf-8") as log_file:
+                                log_file.write(
+                                    f"템플릿 파일 로드 성공: {template_path}\n"
+                                )
+                                log_file.write(f"시도한 경로들:\n")
+                                for path in possible_paths:
+                                    log_file.write(
+                                        f"  - {path} (존재: {os.path.exists(path)})\n"
+                                    )
+                        except Exception:
+                            pass
+                        return
+            except Exception as e:
+                continue
+
+        # 모든 경로 실패
+        self.coding_templates = {}
+        # 디버깅 정보를 파일로 저장
+        try:
+            debug_log = os.path.join(
+                os.path.expanduser("~"), "dvorak_trainer_debug.log"
+            )
+            with open(debug_log, "w", encoding="utf-8") as log_file:
+                log_file.write("코딩 템플릿 파일을 찾을 수 없습니다.\n")
+                log_file.write(f"시도한 경로들:\n")
+                for path in possible_paths:
+                    log_file.write(f"  - {path} (존재: {os.path.exists(path)})\n")
+                if getattr(sys, "frozen", False):
+                    log_file.write(f"\nPyInstaller 환경:\n")
+                    log_file.write(
+                        f"  sys._MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}\n"
+                    )
+                    log_file.write(f"  sys.executable: {sys.executable}\n")
+        except Exception:
+            pass
 
     def switch_mode(self):
         """모드 전환"""

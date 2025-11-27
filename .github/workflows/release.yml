@@ -33,9 +33,9 @@ jobs:
         
         # PyInstaller로 exe 파일 생성 (icon.ico가 없으면 icon 옵션 제외)
         if (Test-Path "icon.ico") {
-          pyinstaller --onefile --windowed --name="DvorakTypingTrainer" --icon=icon.ico main.py
+          pyinstaller --onefile --windowed --name="DvorakTypingTrainer" --icon=icon.ico --add-data "coding_templates.json;." main.py
         } else {
-          pyinstaller --onefile --windowed --name="DvorakTypingTrainer" main.py
+          pyinstaller --onefile --windowed --name="DvorakTypingTrainer" --add-data "coding_templates.json;." main.py
         }
         
     - name: Get tag name
