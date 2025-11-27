@@ -142,25 +142,36 @@ BISC-D/
 
 ## GitHub 릴리즈 생성 방법
 
-### 방법 1: 스크립트 사용 (권장)
+### 🚀 자동 빌드 및 릴리즈 (권장)
 
-#### Windows에서:
-```bash
-create_release.bat v1.0.0 "첫 번째 릴리즈"
-```
+이 프로젝트는 **GitHub Actions**를 사용하여 자동으로 빌드하고 릴리즈를 생성합니다.
 
-#### Linux/Mac에서:
-```bash
-chmod +x create_release.sh
-./create_release.sh v1.0.0 "첫 번째 릴리즈"
-```
+#### 사용 방법:
 
-스크립트 실행 후:
-1. https://github.com/TaeHo-Yoon1/BISC-D/releases/new 로 이동
-2. 'Choose a tag'에서 생성된 태그 선택
-3. 릴리즈 제목과 노트 입력 (RELEASE_NOTES_TEMPLATE.md 참고)
-4. (선택사항) 빌드된 실행 파일 첨부
-5. 'Publish release' 버튼 클릭
+1. **스크립트로 태그 생성 및 푸시**
+
+   **Windows에서:**
+   ```bash
+   create_release.bat v1.0.0 "첫 번째 릴리즈"
+   ```
+
+   **Linux/Mac에서:**
+   ```bash
+   chmod +x create_release.sh
+   ./create_release.sh v1.0.0 "첫 번째 릴리즈"
+   ```
+
+2. **자동 처리**
+   - 태그가 푸시되면 GitHub Actions가 자동으로 실행됩니다
+   - Windows에서 자동으로 빌드합니다
+   - 빌드된 `DvorakTypingTrainer.exe` 파일을 릴리즈에 자동으로 첨부합니다
+   - 릴리즈가 자동으로 생성됩니다
+
+3. **진행 상황 확인**
+   - 빌드 진행 상황: https://github.com/TaeHo-Yoon1/BISC-D/actions
+   - 완료된 릴리즈: https://github.com/TaeHo-Yoon1/BISC-D/releases
+
+**빌드는 보통 2-5분 정도 소요됩니다.**
 
 ### 방법 2: 수동으로 태그 생성
 
@@ -168,11 +179,11 @@ chmod +x create_release.sh
 # 태그 생성
 git tag -a v1.0.0 -m "릴리즈 노트"
 
-# 태그 푸시
+# 태그 푸시 (자동 빌드 및 릴리즈 생성)
 git push origin v1.0.0
 ```
 
-그 후 GitHub 웹사이트에서 릴리즈를 생성하세요.
+태그를 푸시하면 GitHub Actions가 자동으로 빌드하고 릴리즈를 생성합니다.
 
 ## 라이선스
 
