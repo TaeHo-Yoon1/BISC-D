@@ -21,7 +21,7 @@ if exist "build" rmdir /s /q build
 
 REM Build exe file with PyInstaller
 echo Building exe file...
-pyinstaller --onefile --windowed --name="DvorakTypingTrainer" --icon=icon.ico main.py
+pyinstaller --onefile --windowed --name="DvorakTypingTrainer" --icon=icon.ico --add-data "coding_templates.json;." main.py
 
 REM Build completion message
 if exist "dist\DvorakTypingTrainer.exe" (

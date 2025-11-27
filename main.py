@@ -4,6 +4,7 @@ import random
 import time
 import json
 import os
+import sys
 from datetime import datetime
 import re
 
@@ -1064,9 +1065,18 @@ int main() {
         pass
 
     def load_coding_templates(self):
-        """코딩 템플릿 로드"""
+        """코딩 템플릿 로드 (PyInstaller 환경 지원)"""
         try:
-            with open("coding_templates.json", "r", encoding="utf-8") as file:
+            # PyInstaller로 빌드된 경우 sys._MEIPASS 사용
+            if getattr(sys, "frozen", False):
+                # 실행 파일로 빌드된 경우
+                base_path = sys._MEIPASS
+            else:
+                # 개발 환경
+                base_path = os.path.dirname(os.path.abspath(__file__))
+
+            template_path = os.path.join(base_path, "coding_templates.json")
+            with open(template_path, "r", encoding="utf-8") as file:
                 self.coding_templates = json.load(file)
         except FileNotFoundError:
             self.coding_templates = {}
@@ -2028,21 +2038,39 @@ int main() {
                 name_entry.bind("<Return>", lambda e: save_name_and_close())
 
                 button_frame = tk.Frame(container, bg="#2a2a2a")
-                button_frame.pack(pady=10)
+                button_frame.pack(pady=10, fill=tk.X)
 
-                tk.Button(
+                save_button = tk.Button(
                     button_frame,
                     text="저장",
                     command=save_name_and_close,
-                    font=("맑은 고딕", 11),
-                    bg="#004466",
+                    font=("맑은 고딕", 11, "bold"),
+                    bg="#006600",
                     fg="#00ff00",
                     relief="flat",
-                    padx=20,
-                    pady=5,
-                    activebackground="#006688",
+                    padx=30,
+                    pady=8,
+                    activebackground="#008800",
                     activeforeground="#00ff00",
-                ).pack(side=tk.LEFT, padx=5)
+                    cursor="hand2",
+                )
+                save_button.pack(side=tk.LEFT, padx=5)
+
+                cancel_button = tk.Button(
+                    button_frame,
+                    text="취소",
+                    command=name_window.destroy,
+                    font=("맑은 고딕", 11),
+                    bg="#404040",
+                    fg="#00ff00",
+                    relief="flat",
+                    padx=30,
+                    pady=8,
+                    activebackground="#505050",
+                    activeforeground="#00ff00",
+                    cursor="hand2",
+                )
+                cancel_button.pack(side=tk.LEFT, padx=5)
             else:
                 # 연습 모드: 점수 기록 없이 간단한 완료 메시지만 표시
                 message = f"연습 완료!\n\n타이핑 속도: {final_wpm:.1f} WPM\n정확도: {final_accuracy:.1f}%\n시간: {final_time:.1f}초\n\n(연습 모드: 점수 기록 없음)"

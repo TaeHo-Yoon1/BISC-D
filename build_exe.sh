@@ -20,7 +20,7 @@ rm -rf dist build
 
 # PyInstaller로 exe 파일 생성
 echo "exe 파일 빌드 중..."
-pyinstaller --onefile --windowed --name="DvorakTypingTrainer" main.py
+pyinstaller --onefile --windowed --name="DvorakTypingTrainer" --add-data "coding_templates.json:." main.py
 
 # 빌드 완료 메시지
 if [ -f "dist/DvorakTypingTrainer" ]; then
