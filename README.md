@@ -140,6 +140,40 @@ BISC-D/
 
 이 프로그램은 드보락 키보드 레이아웃 학습을 돕기 위해 개발되었습니다.
 
+## GitHub 릴리즈 생성 방법
+
+### 방법 1: 스크립트 사용 (권장)
+
+#### Windows에서:
+```bash
+create_release.bat v1.0.0 "첫 번째 릴리즈"
+```
+
+#### Linux/Mac에서:
+```bash
+chmod +x create_release.sh
+./create_release.sh v1.0.0 "첫 번째 릴리즈"
+```
+
+스크립트 실행 후:
+1. https://github.com/TaeHo-Yoon1/BISC-D/releases/new 로 이동
+2. 'Choose a tag'에서 생성된 태그 선택
+3. 릴리즈 제목과 노트 입력 (RELEASE_NOTES_TEMPLATE.md 참고)
+4. (선택사항) 빌드된 실행 파일 첨부
+5. 'Publish release' 버튼 클릭
+
+### 방법 2: 수동으로 태그 생성
+
+```bash
+# 태그 생성
+git tag -a v1.0.0 -m "릴리즈 노트"
+
+# 태그 푸시
+git push origin v1.0.0
+```
+
+그 후 GitHub 웹사이트에서 릴리즈를 생성하세요.
+
 ## 라이선스
 
 이 프로그램은 자유롭게 사용, 수정, 배포할 수 있습니다.
