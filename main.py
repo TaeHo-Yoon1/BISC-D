@@ -250,6 +250,10 @@ class DvorakTypingTrainer:
             "}": "+",
         }
 
+        # 드보락 키보드 시각화용 라벨 저장용
+        self.dvorak_key_labels = {}
+        self.last_highlighted_key_label = None
+
         # 통계 데이터
         self.stats_file = "typing_stats.json"
         self.load_stats()
@@ -292,8 +296,9 @@ class DvorakTypingTrainer:
             row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=10, pady=5
         )
         main_container.grid_rowconfigure(0, weight=1)
+        # 왼쪽(타이핑 영역)은 가변, 오른쪽(사이드 패널)은 고정 폭으로 유지
         main_container.grid_columnconfigure(0, weight=1)
-        main_container.grid_columnconfigure(1, weight=0)
+        main_container.grid_columnconfigure(1, weight=0, minsize=self.side_panel_width)
 
         # 왼쪽: 타자연습 영역
         self.setup_typing_area(main_container)
@@ -720,8 +725,12 @@ int main() {
         self.typing_frame.grid(
             row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 10)
         )
+        # 위: 텍스트 영역(확장), 아래: 드보락 키보드 시각화(고정)
         self.typing_frame.grid_rowconfigure(0, weight=1)
+        self.typing_frame.grid_rowconfigure(1, weight=0)
         self.typing_frame.grid_columnconfigure(0, weight=1)
+        # 텍스트 내용 때문에 프레임 자체 크기가 들썩이지 않도록 함
+        self.typing_frame.grid_propagate(False)
 
         # 코딩 모드 설정은 이제 중앙 언어 선택 화면에서 처리
 
@@ -732,6 +741,8 @@ int main() {
         )
         text_container.grid_rowconfigure(0, weight=1)
         text_container.grid_columnconfigure(0, weight=1)
+        # 텍스트 길이에 따라 부모 프레임 크기가 바뀌지 않도록 고정
+        text_container.grid_propagate(False)
 
         # 텍스트 위젯 (줄별 표시용)
         self.text_display = tk.Text(
@@ -766,6 +777,29 @@ int main() {
         )
         # self.h_scrollbar.grid(row=1, column=0, sticky=(tk.W, tk.E))
         self.text_display.configure(xscrollcommand=self.h_scrollbar.set)
+        # 화면 중단 아래: 드보락 키보드 전체를 중앙에 표시 (반응형)
+        keyboard_container = tk.Frame(self.typing_frame, bg="#1a1a1a")
+        keyboard_container.grid(
+            row=1, column=0, sticky=(tk.W, tk.E), padx=15, pady=(0, 10)
+        )
+        keyboard_container.grid_columnconfigure(0, weight=1)
+
+        keyboard_frame = tk.Frame(keyboard_container, bg="#1a1a1a")
+        keyboard_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
+
+        title_label = tk.Label(
+            keyboard_frame,
+            text="드보락 레이아웃 (실시간 키 입력 표시)",
+            font=("맑은 고딕", 11, "bold"),
+            bg="#1a1a1a",
+            fg="#00ff00",
+        )
+        title_label.pack(anchor=tk.W, pady=(0, 4))
+
+        key_container = tk.Frame(keyboard_frame, bg="#1a1a1a", relief="sunken", bd=1)
+        key_container.pack(fill=tk.X)
+
+        self.create_dvorak_keyboard(key_container)
 
         # 컨트롤 버튼은 이제 필요 없음 (언어 선택으로 대체)
 
@@ -828,131 +862,7 @@ int main() {
         )
         self.progress_info.pack(anchor=tk.W)
 
-        # 드보락 키보드 레이아웃 (전체)
-        keyboard_frame = tk.Frame(self.side_frame, bg="#2d2d2d")
-        keyboard_frame.pack(fill=tk.X, padx=15, pady=10)
-
-        tk.Label(
-            keyboard_frame,
-            text="드보락 레이아웃",
-            font=("맑은 고딕", 12, "bold"),
-            bg="#2d2d2d",
-            fg="#00ff00",
-        ).pack(anchor=tk.W)
-
-        # 전체 드보락 키보드 표시
-        key_container = tk.Frame(keyboard_frame, bg="#1a1a1a", relief="sunken", bd=1)
-        key_container.pack(fill=tk.X, pady=6)
-
-        # 드보락 레이아웃 정의 (이미지 기준, Shift 조합 포함)
-        # 각 키는 (기본문자, Shift문자) 튜플 또는 단일 문자
-        dvorak_rows = [
-            [
-                ("`", "~"),
-                ("1", "!"),
-                ("2", "@"),
-                ("3", "#"),
-                ("4", "$"),
-                ("5", "%"),
-                ("6", "^"),
-                ("7", "&"),
-                ("8", "*"),
-                ("9", "("),
-                ("0", ")"),
-                ("[", "{"),
-                ("]", "}"),
-                ("\\", "|"),
-            ],
-            [
-                "",
-                ("'", '"'),
-                (",", "<"),
-                (".", ">"),
-                ("p", "P"),
-                ("y", "Y"),
-                ("f", "F"),
-                ("g", "G"),
-                ("c", "C"),
-                ("r", "R"),
-                ("l", "L"),
-                ("/", "?"),
-                ("=", "+"),
-                ("\\", "|"),
-            ],
-            [
-                "",
-                ("a", "A"),
-                ("o", "O"),
-                ("e", "E"),
-                ("u", "U"),
-                ("i", "I"),
-                ("d", "D"),
-                ("h", "H"),
-                ("t", "T"),
-                ("n", "N"),
-                ("s", "S"),
-                ("-", "_"),
-                "",
-                "",
-            ],
-            [
-                "",
-                (";", ":"),
-                ("q", "Q"),
-                ("j", "J"),
-                ("k", "K"),
-                ("x", "X"),
-                ("b", "B"),
-                ("m", "M"),
-                ("w", "W"),
-                ("v", "V"),
-                ("z", "Z"),
-                "",
-                "",
-                "",
-            ],
-        ]
-
-        for row_keys in dvorak_rows:
-            row_frame = tk.Frame(key_container, bg="#1a1a1a")
-            row_frame.pack(pady=self.keyboard_gap_px)
-            for key in row_keys:
-                if key:
-                    if isinstance(key, tuple):
-                        # Shift 조합이 있는 경우: 위에 Shift 문자, 아래에 기본 문자
-                        key_label = tk.Label(
-                            row_frame,
-                            text=f"{key[1]}\n{key[0]}",  # Shift 문자 위, 기본 문자 아래
-                            width=self.keyboard_key_width,
-                            height=self.keyboard_key_height,
-                            font=("맑은 고딕", self.keyboard_font_size - 1),
-                            bg="#404040",
-                            fg="#00ff00",
-                            relief="raised",
-                            bd=1,
-                            justify=tk.CENTER,
-                        )
-                    else:
-                        # 단일 문자
-                        key_label = tk.Label(
-                            row_frame,
-                            text=key,
-                            width=self.keyboard_key_width,
-                            height=self.keyboard_key_height,
-                            font=("맑은 고딕", self.keyboard_font_size),
-                            bg="#404040",
-                            fg="#00ff00",
-                            relief="raised",
-                            bd=1,
-                        )
-                    key_label.pack(side=tk.LEFT, padx=self.keyboard_gap_px)
-                else:
-                    # 빈 공간
-                    tk.Frame(
-                        row_frame,
-                        width=self.keyboard_empty_size,
-                        height=self.keyboard_empty_size,
-                    ).pack(side=tk.LEFT, padx=self.keyboard_gap_px)
+        # (우측) 드보락 키보드 레이아웃은 중앙으로 이동했기 때문에 여기서는 표시하지 않음
 
     def setup_bottom_panel(self):
         """하단 패널 (통계 및 키보드 시각화)"""
@@ -1145,6 +1055,181 @@ int main() {
                         f"  sys._MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}\n"
                     )
                     log_file.write(f"  sys.executable: {sys.executable}\n")
+        except Exception:
+            pass
+
+    def create_dvorak_keyboard(self, parent):
+        """드보락 키보드 전체를 parent 안에 생성하고 라벨을 저장"""
+        self.dvorak_key_labels = {}
+
+        # 드보락 레이아웃 정의 (이미지 기준, Shift 조합 포함)
+        # 각 키는 (기본문자, Shift문자) 튜플 또는 단일 문자
+        dvorak_rows = [
+            [
+                ("`", "~"),
+                ("1", "!"),
+                ("2", "@"),
+                ("3", "#"),
+                ("4", "$"),
+                ("5", "%"),
+                ("6", "^"),
+                ("7", "&"),
+                ("8", "*"),
+                ("9", "("),
+                ("0", ")"),
+                ("[", "{"),
+                ("]", "}"),
+                ("\\", "|"),
+            ],
+            [
+                "",
+                ("'", '"'),
+                (",", "<"),
+                (".", ">"),
+                ("p", "P"),
+                ("y", "Y"),
+                ("f", "F"),
+                ("g", "G"),
+                ("c", "C"),
+                ("r", "R"),
+                ("l", "L"),
+                ("/", "?"),
+                ("=", "+"),
+                ("\\", "|"),
+            ],
+            [
+                "",
+                ("a", "A"),
+                ("o", "O"),
+                ("e", "E"),
+                ("u", "U"),
+                ("i", "I"),
+                ("d", "D"),
+                ("h", "H"),
+                ("t", "T"),
+                ("n", "N"),
+                ("s", "S"),
+                ("-", "_"),
+                "",
+                "",
+            ],
+            [
+                "",
+                (";", ":"),
+                ("q", "Q"),
+                ("j", "J"),
+                ("k", "K"),
+                ("x", "X"),
+                ("b", "B"),
+                ("m", "M"),
+                ("w", "W"),
+                ("v", "V"),
+                ("z", "Z"),
+                "",
+                "",
+                "",
+            ],
+        ]
+
+        for row_keys in dvorak_rows:
+            row_frame = tk.Frame(parent, bg="#1a1a1a")
+            row_frame.pack(pady=self.keyboard_gap_px)
+            for key in row_keys:
+                if key:
+                    if isinstance(key, tuple):
+                        base_char, shifted_char = key[0], key[1]
+                        # Shift 조합이 있는 경우: 위에 Shift 문자, 아래에 기본 문자
+                        key_label = tk.Label(
+                            row_frame,
+                            text=f"{shifted_char}\n{base_char}",
+                            width=self.keyboard_key_width,
+                            height=self.keyboard_key_height,
+                            font=("맑은 고딕", self.keyboard_font_size - 1),
+                            bg="#404040",
+                            fg="#00ff00",
+                            relief="raised",
+                            bd=1,
+                            justify=tk.CENTER,
+                        )
+                        # 기본/Shift 문자 모두 라벨 맵에 등록
+                        self.dvorak_key_labels[base_char] = key_label
+                        self.dvorak_key_labels[shifted_char] = key_label
+                    else:
+                        base_char = key
+                        key_label = tk.Label(
+                            row_frame,
+                            text=base_char,
+                            width=self.keyboard_key_width,
+                            height=self.keyboard_key_height,
+                            font=("맑은 고딕", self.keyboard_font_size),
+                            bg="#404040",
+                            fg="#00ff00",
+                            relief="raised",
+                            bd=1,
+                        )
+                        self.dvorak_key_labels[base_char] = key_label
+
+                    key_label.pack(side=tk.LEFT, padx=self.keyboard_gap_px)
+                else:
+                    # 빈 공간
+                    tk.Frame(
+                        row_frame,
+                        width=self.keyboard_empty_size,
+                        height=self.keyboard_empty_size,
+                    ).pack(side=tk.LEFT, padx=self.keyboard_gap_px)
+
+    def get_dvorak_char(self, char):
+        """입력 문자를 드보락 문자로 변환"""
+        if not self.use_dvorak_mapping:
+            return char
+
+        # 먼저 직접 매핑에서 찾기 (대문자, Shift 조합 포함)
+        if char in self.dvorak_mapping:
+            return self.dvorak_mapping[char]
+        elif char.isalpha() and char.islower():
+            # 소문자 알파벳
+            return self.dvorak_mapping.get(char, char)
+        elif char.isalpha() and char.isupper():
+            # 대문자 알파벳 - 소문자로 변환 후 다시 대문자
+            base_char = char.lower()
+            if base_char in self.dvorak_mapping:
+                return self.dvorak_mapping[base_char].upper()
+            return char
+        else:
+            # 특수문자
+            return self.dvorak_mapping.get(char, char)
+
+    def highlight_dvorak_key(self, dvorak_char):
+        """드보락 키보드에서 해당 키를 잠깐 하이라이트"""
+        if not self.dvorak_key_labels:
+            return
+
+        # 이전 하이라이트 원복
+        if self.last_highlighted_key_label is not None:
+            try:
+                self.last_highlighted_key_label.config(bg="#404040")
+            except Exception:
+                pass
+            self.last_highlighted_key_label = None
+
+        label = self.dvorak_key_labels.get(dvorak_char)
+        if label is None:
+            return
+
+        try:
+            label.config(bg="#008800")
+            self.last_highlighted_key_label = label
+
+            # 120ms 후 원래 색으로 복원
+            def _restore():
+                if self.last_highlighted_key_label is label:
+                    try:
+                        label.config(bg="#404040")
+                    except Exception:
+                        pass
+                    self.last_highlighted_key_label = None
+
+            self.root.after(120, _restore)
         except Exception:
             pass
 
@@ -1728,6 +1813,8 @@ int main() {
         ):
             # event.char에 이미 Shift 조합이 반영되어 있음
             # 예: Shift+Q -> "Q", Shift+1 -> "!", Shift+, -> "<"
+            dvorak_char = self.get_dvorak_char(event.char)
+            self.highlight_dvorak_key(dvorak_char)
             self.handle_char_input(event.char)
             return "break"
 
@@ -1739,32 +1826,7 @@ int main() {
             return
 
         # 드보락 키보드 매핑 적용
-        if self.use_dvorak_mapping:
-            # 먼저 직접 매핑에서 찾기 (대문자, Shift 조합 포함)
-            if char in self.dvorak_mapping:
-                dvorak_char = self.dvorak_mapping[char]
-            elif char.isalpha() and char.islower():
-                # 소문자 알파벳인 경우
-                if char in self.dvorak_mapping:
-                    dvorak_char = self.dvorak_mapping[char]
-                else:
-                    dvorak_char = char
-            elif char.isalpha() and char.isupper():
-                # 대문자 알파벳인 경우 - 직접 매핑에서 찾거나 소문자로 변환
-                if char in self.dvorak_mapping:
-                    dvorak_char = self.dvorak_mapping[char]
-                else:
-                    # 소문자로 변환하여 매핑 후 대문자로 변환
-                    base_char = char.lower()
-                    if base_char in self.dvorak_mapping:
-                        dvorak_char = self.dvorak_mapping[base_char].upper()
-                    else:
-                        dvorak_char = char
-            else:
-                # 특수문자는 직접 매핑에서 찾거나 원래 문자 사용
-                dvorak_char = self.dvorak_mapping.get(char, char)
-        else:
-            dvorak_char = char
+        dvorak_char = self.get_dvorak_char(char)
 
         current_line_text = self.text_lines[self.current_line]
 
